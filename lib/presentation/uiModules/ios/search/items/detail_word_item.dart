@@ -1,0 +1,172 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
+
+import '../../../../../core/routes/route_names.dart';
+import '../../../../../core/strings/app_constraints.dart';
+import '../../../../../core/styles/app_styles.dart';
+import '../../../../../data/state/favorite_words_state.dart';
+import '../../../../../domain/entities/args/word_args.dart';
+import '../../../../../domain/entities/dictionary_entity.dart';
+import '../../widgets/forms_text.dart';
+import '../../widgets/translation_text.dart';
+
+class DetailWordItem extends StatelessWidget {
+  const DetailWordItem({
+    super.key,
+    required this.wordModel,
+  });
+
+  final DictionaryEntity wordModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: AppStyles.mardingOnlyBottom,
+      child: Slidable(
+        endActionPane: ActionPane(
+          motion: const StretchMotion(),
+          children: [
+            SlidableAction(
+              onPressed: (context) {
+                SharePlus.instance.share(
+                  ShareParams(
+                    text: wordModel.wordContent(),
+                    sharePositionOrigin: const Rect.fromLTWH(1, 1, 1, 2 / 2),
+                  ),
+                );
+              },
+              backgroundColor: CupertinoColors.systemBlue,
+              icon: CupertinoIcons.share,
+            ),
+            Consumer<FavoriteWordsState>(
+              builder: (BuildContext context, favoriteWordState, _) {
+                return FutureBuilder<bool>(
+                  future: favoriteWordState.fetchIsWordFavorite(wordNumber: wordModel.wordNumber),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      final bool isFavorite = snapshot.data!;
+                      return SlidableAction(
+                        onPressed: (context) {
+                          if (isFavorite) {
+                            Navigator.pushNamed(
+                              context,
+                              RouteNames.wordFavoriteDetailPage,
+                              arguments: WordArgs(wordNumber: wordModel.wordNumber),
+                            );
+                          } else {
+                            Navigator.pushNamed(
+                              context,
+                              RouteNames.addFavoriteWordPage,
+                              arguments: WordArgs(wordNumber: wordModel.wordNumber),
+                            );
+                          }
+                        },
+                        backgroundColor: CupertinoColors.systemIndigo,
+                        icon: isFavorite ? CupertinoIcons.bookmark_fill : CupertinoIcons.bookmark,
+                      );
+                    } else {
+                      return const CupertinoActivityIndicator();
+                    }
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+        child: CupertinoListTile(
+          padding: AppStyles.mainMarding,
+          backgroundColor: CupertinoColors.quaternarySystemFill,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: CupertinoListTile(
+                      padding: EdgeInsets.zero,
+                      title: Row(
+                        children: [
+                          Text(
+                            wordModel.arabicWord,
+                            style: const TextStyle(
+                              fontSize: 60,
+                              fontFamily: AppConstraints.fontUthmanic,
+                            ),
+                            textDirection: TextDirection.rtl,
+                          ),
+                          const SizedBox(width: 8),
+                          wordModel.forms != null
+                              ? FormsText(content: wordModel.forms!)
+                              : const SizedBox(),
+                          const SizedBox(width: 8),
+                          wordModel.additional != null
+                              ? FormsText(content: wordModel.additional!)
+                              : const SizedBox(),
+                        ],
+                      ),
+                      subtitle: TranslationText(translation: wordModel.translation),
+                    ),
+                  ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          wordModel.homonymNr != null
+                              ? Text(
+                                  wordModel.homonymNr.toString(),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: CupertinoColors.systemGrey,
+                                  ),
+                                )
+                              : const SizedBox(),
+                          const SizedBox(width: 4),
+                          wordModel.vocalization != null
+                              ? Text(
+                                  wordModel.vocalization!,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    color: CupertinoColors.systemGrey,
+                                  ),
+                                )
+                              : const SizedBox(),
+                          const SizedBox(width: 4),
+                          wordModel.form != null
+                              ? Text(
+                                  wordModel.form!,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontFamily: AppConstraints.fontHeuristica,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                )
+                              : const SizedBox(),
+                        ],
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        wordModel.root,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          color: CupertinoColors.systemRed,
+                          fontFamily: AppConstraints.fontUthmanic,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

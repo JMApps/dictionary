@@ -1,0 +1,200 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../core/routes/route_names.dart';
+import '../../../../core/strings/app_constraints.dart';
+import '../../../../core/strings/app_strings.dart';
+import '../../../../core/styles/app_styles.dart';
+import '../../../../data/state/app_settings_state.dart';
+import '../../../../data/state/word_exact_match_state.dart';
+import '../collections/dialogs/add_collection_dialog.dart';
+import 'items/main_card_item.dart';
+import 'lists/main_collections_list.dart';
+import 'widgets/collections_order_button.dart';
+
+class MainMaterialPage extends StatefulWidget {
+  const MainMaterialPage({super.key});
+
+  @override
+  State<MainMaterialPage> createState() => _MainMaterialPageState();
+}
+
+class _MainMaterialPageState extends State<MainMaterialPage> {
+  @override
+  void initState() {
+    super.initState();
+    _isWordSearch();
+  }
+
+  Future<void> _isWordSearch() async {
+    final isSearchWord = Provider.of<AppSettingsState>(context, listen: false).getIsSearchWord;
+    if (isSearchWord) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          Navigator.pushNamed(context, RouteNames.searchWordsPage);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme appColors = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            stretch: true,
+            centerTitle: true,
+            floating: true,
+            title: const Text(AppStrings.appName),
+            expandedHeight: 100,
+            flexibleSpace: FlexibleSpaceBar(
+              expandedTitleScale: 1.25,
+              titlePadding: const EdgeInsetsDirectional.only(
+                start: 0,
+                bottom: 0,
+              ),
+              title: Padding(
+                padding: AppStyles.horizontalVerticalMini,
+                child: CupertinoTextField(
+                  readOnly: true,
+                  onTap: () {
+                    Navigator.pushNamed(context, RouteNames.searchWordsPage);
+                  },
+                  padding: AppStyles.horizontalMicroVerticalMicro,
+                  placeholder: AppStrings.searchWords,
+                  placeholderStyle: TextStyle(
+                    fontSize: 16,
+                    color: appColors.secondary.withAlpha(125),
+                    fontFamily: AppConstraints.fontSFProRegular,
+                  ),
+                  textAlign: TextAlign.center,
+                  decoration: BoxDecoration(
+                    color: appColors.primary.withAlpha(25),
+                    borderRadius: AppStyles.mainBorderMini,
+                  ),
+                ),
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings),
+                onPressed: () {
+                  Navigator.pushNamed(context, RouteNames.appSettingsPage);
+                },
+              ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Consumer<WordExactMatchState>(
+              builder: (BuildContext context, matchState, _) {
+                return ListTile(
+                  visualDensity: const VisualDensity(vertical: -4),
+                  enableFeedback: true,
+                  contentPadding: AppStyles.matchMarding,
+                  title: const Text(
+                    AppStrings.exactMatch,
+                    style: TextStyle(fontSize: 18, fontFamily: AppConstraints.fontSFProRegular),
+                  ),
+                  trailing: Transform.scale(
+                    scale: 0.85,
+                    child: Switch(
+                      value: matchState.exactMatch,
+                      onChanged: (value) {
+                        matchState.exactMatch = value;
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: AppStyles.mardingSymmetricHorMini,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: MainCardItem(
+                          routeName: RouteNames.quizPage,
+                          iconName: Icons.quiz,
+                          title: AppStrings.quiz,
+                          color: Colors.indigo,
+                        ),
+                      ),
+                      Expanded(
+                        child: MainCardItem(
+                          routeName: RouteNames.wordConstructorPage,
+                          iconName: Icons.table_chart,
+                          title: AppStrings.wordsConstructor,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: MainCardItem(
+                          routeName: RouteNames.cardModePage,
+                          iconName: Icons.filter_frames,
+                          title: AppStrings.cards,
+                          color: Colors.red,
+                        ),
+                      ),
+                      Expanded(
+                        child: MainCardItem(
+                          routeName: RouteNames.allCollectionsPage,
+                          iconName: Icons.collections_bookmark,
+                          title: AppStrings.allCollections,
+                          color: Colors.indigo,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: ListTile(
+              visualDensity: VisualDensity(vertical: -4, horizontal: -4),
+              contentPadding: AppStyles.sortMarding,
+              title: Text(
+                AppStrings.lastCollections,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontFamily: AppConstraints.fontSFPro,
+                  letterSpacing: 0.15,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.start,
+              ),
+              leading: CollectionsOrderButton(),
+            ),
+          ),
+          const MainCollectionsList(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        elevation: 0,
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) {
+              return const AddCollectionDialog();
+            },
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
