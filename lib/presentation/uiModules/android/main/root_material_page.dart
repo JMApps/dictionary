@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/routes/material_routes.dart';
@@ -16,6 +18,17 @@ class RootMaterialPage extends StatelessWidget {
       theme: MaterialThemes().lightTheme,
       darkTheme: MaterialThemes().darkTheme,
       onGenerateRoute: MaterialRoutes.onGeneratorRoute,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        final bottomInset = mediaQuery.viewPadding.bottom;
+        return SafeArea(
+          top: false,
+          right: false,
+          left: false,
+          bottom: Platform.isAndroid && bottomInset > 12.0,
+          child: child!,
+        );
+      },
       home: const MainMaterialPage(),
     );
   }
